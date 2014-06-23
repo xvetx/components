@@ -6,6 +6,7 @@ use yii\data\ActiveDataProvider;
 use yii\db\ActiveRecord;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
+use yii\web\Cookie;
 use yii\web\NotFoundHttpException;
 use Yii;
 
@@ -20,6 +21,11 @@ class BaseController extends Controller
 	 * @var ActiveRecord
 	 */
 	public $modelSearchClass;
+
+	/**
+	 * @var string
+	 */
+	public $layout = '//back';
 
 
 	public function behaviors()
@@ -210,10 +216,6 @@ class BaseController extends Controller
 		if ( \Yii::$app->request->post('sorter') )
 		{
 			$sortArray = \Yii::$app->request->post('sorter',[]);
-			echo "<pre>";
-			var_dump($sortArray);
-			echo "</pre>";
-			die();
 
 			$modelClass = $this->modelClass;
 
@@ -225,6 +227,23 @@ class BaseController extends Controller
 				$model->save(false);
 			}
 
+		}
+	}
+
+	/**
+	 * Set page size for grid
+	 */
+	public function actionGridPageSize()
+	{
+		if ( \Yii::$app->request->post('grid-page-size') )
+		{
+			$cookie = new Cookie([
+				'name' => '_grid_page_size',
+				'value' => \Yii::$app->request->post('grid-page-size'),
+				'expire' => time() + 86400 * 365, // 1 year
+			]);
+
+			\Yii::$app->response->cookies->add($cookie);
 		}
 	}
 
