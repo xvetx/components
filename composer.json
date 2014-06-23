@@ -1,4 +1,9 @@
 {
     "name": "webvimark/components",
-    "description": "Test package"
+    "description": "Test package",
+	"autoload": {
+		"psr-4": {
+			"webvimark\\components\\": ""
+		}
+	}
 }
