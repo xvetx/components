@@ -1,6 +1,5 @@
 <?php
-namespace app\webvimark\components;
-
+namespace webvimark\components;
 
 use yii\db\ActiveRecord;
 use Yii;

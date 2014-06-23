@@ -1,6 +1,6 @@
 {
-    "name": "webvimark/components",
-    "description": "Test package",
+	"name": "webvimark/components",
+	"description": "Components for yii 2",
 	"autoload": {
 		"psr-4": {
 			"webvimark\\components\\": ""

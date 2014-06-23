@@ -1,17 +1,9 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: mark
- * Date: 6/19/14
- * Time: 12:59 PM
- */
-
-namespace app\webvimark\components;
+namespace webvimark\components;
 
 
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveRecord;
-use yii\db\Query;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;

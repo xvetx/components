@@ -1,11 +1,10 @@
 <?php
-namespace app\webvimark\components;
+namespace webvimark\components;
 
 
 use yii\base\InvalidConfigException;
 use yii\grid\DataColumn;
 use yii\helpers\ArrayHelper;
-use yii\web\View;
 
 /**
  * Class StatusColumn
