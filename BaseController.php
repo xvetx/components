@@ -23,6 +23,22 @@ class BaseController extends Controller
 	public $modelSearchClass;
 
 	/**
+	 * If false then 'index', 'update', 'grid-sort', etc. will be disabled
+	 *
+	 * @var bool
+	 */
+	protected $enableBasetActions = true;
+
+	/**
+	 * Actions that will be disable on enableBasetActions = false;
+	 *
+	 * @var array
+	 */
+	protected $baseActions = ['index', 'update', 'create', 'view', 'delete', 'toggleAttribute', 'bulkActivate',
+				  'bulkDeactivate', 'bulkDelete', 'gridSort', 'gridPageSize'];
+
+
+	/**
 	 * @var string
 	 */
 	public $layout = '//back';
@@ -41,7 +57,7 @@ class BaseController extends Controller
 	}
 
 	/**
-	 * Lists all Excursion models.
+	 * Lists all models.
 	 * @return mixed
 	 */
 	public function actionIndex()
@@ -60,14 +76,11 @@ class BaseController extends Controller
 			]);
 		}
 
-		return $this->render('index', [
-			'dataProvider' => $dataProvider,
-			'searchModel'  => $searchModel,
-		]);
+		return $this->render('index', compact('dataProvider', 'searchModel'));
 	}
 
 	/**
-	 * Displays a single Excursion model.
+	 * Displays a single model.
 	 *
 	 * @param integer $id
 	 *
@@ -75,13 +88,13 @@ class BaseController extends Controller
 	 */
 	public function actionView($id)
 	{
-		return $this->render('view', [
+		return $this->renderIsAjax('view', [
 			'model' => $this->findModel($id),
 		]);
 	}
 
 	/**
-	 * Creates a new Excursion model.
+	 * Creates a new model.
 	 * If creation is successful, the browser will be redirected to the 'view' page.
 	 * @return mixed
 	 */
@@ -91,21 +104,14 @@ class BaseController extends Controller
 
 		if ( $model->load(Yii::$app->request->post()) && $model->save() )
 		{
-			return $this->redirect([
-				'view',
-				'id' => $model->id
-			]);
+			return $this->redirect(['view',	'id' => $model->id]);
 		}
-		else
-		{
-			return $this->render('create', [
-				'model' => $model,
-			]);
-		}
+
+		return $this->renderIsAjax('create', compact('model'));
 	}
 
 	/**
-	 * Updates an existing Excursion model.
+	 * Updates an existing model.
 	 * If update is successful, the browser will be redirected to the 'view' page.
 	 *
 	 * @param integer $id
@@ -118,21 +124,14 @@ class BaseController extends Controller
 
 		if ( $model->load(Yii::$app->request->post()) AND $model->save())
 		{
-			return $this->redirect([
-				'view',
-				'id' => $model->id
-			]);
+			return $this->redirect(['view',	'id' => $model->id]);
 		}
-		else
-		{
-			return $this->render('update', [
-				'model' => $model,
-			]);
-		}
+
+		return $this->renderIsAjax('update', compact('model'));
 	}
 
 	/**
-	 * Deletes an existing Excursion model.
+	 * Deletes an existing model.
 	 * If deletion is successful, the browser will be redirected to the 'index' page.
 	 *
 	 * @param integer $id
@@ -164,13 +163,13 @@ class BaseController extends Controller
 	 */
 	public function actionBulkActivate()
 	{
-		if ( \Yii::$app->request->post('selection') )
+		if ( Yii::$app->request->post('selection') )
 		{
 			$modelClass = $this->modelClass;
 
 			$modelClass::updateAll(
 				['active'=>1],
-				['id'=>\Yii::$app->request->post('selection', [])]
+				['id'=>Yii::$app->request->post('selection', [])]
 			);
 		}
 	}
@@ -180,13 +179,13 @@ class BaseController extends Controller
 	 */
 	public function actionBulkDeactivate()
 	{
-		if ( \Yii::$app->request->post('selection') )
+		if ( Yii::$app->request->post('selection') )
 		{
 			$modelClass = $this->modelClass;
 
 			$modelClass::updateAll(
 				['active'=>0],
-				['id'=>\Yii::$app->request->post('selection', [])]
+				['id'=>Yii::$app->request->post('selection', [])]
 			);
 		}
 	}
@@ -197,12 +196,12 @@ class BaseController extends Controller
 	 */
 	public function actionBulkDelete()
 	{
-		if ( \Yii::$app->request->post('selection') )
+		if ( Yii::$app->request->post('selection') )
 		{
 			$modelClass = $this->modelClass;
 
 			$modelClass::deleteAll(
-				['id'=>\Yii::$app->request->post('selection', [])]
+				['id'=>Yii::$app->request->post('selection', [])]
 			);
 		}
 	}
@@ -213,9 +212,9 @@ class BaseController extends Controller
 	 */
 	public function actionGridSort()
 	{
-		if ( \Yii::$app->request->post('sorter') )
+		if ( Yii::$app->request->post('sorter') )
 		{
-			$sortArray = \Yii::$app->request->post('sorter',[]);
+			$sortArray = Yii::$app->request->post('sorter',[]);
 
 			$modelClass = $this->modelClass;
 
@@ -235,15 +234,35 @@ class BaseController extends Controller
 	 */
 	public function actionGridPageSize()
 	{
-		if ( \Yii::$app->request->post('grid-page-size') )
+		if ( Yii::$app->request->post('grid-page-size') )
 		{
 			$cookie = new Cookie([
 				'name' => '_grid_page_size',
-				'value' => \Yii::$app->request->post('grid-page-size'),
+				'value' => Yii::$app->request->post('grid-page-size'),
 				'expire' => time() + 86400 * 365, // 1 year
 			]);
 
-			\Yii::$app->response->cookies->add($cookie);
+			Yii::$app->response->cookies->add($cookie);
+		}
+	}
+
+	/**
+	 * Render ajax or usual depends on request
+	 *
+	 * @param string $view
+	 * @param array $params
+	 *
+	 * @return string|\yii\web\Response
+	 */
+	protected function renderIsAjax($view, $params)
+	{
+		if ( Yii::$app->request->isAjax )
+		{
+			return $this->renderAjax($view, $params);
+		}
+		else
+		{
+			return $this->render($view, $params);
 		}
 	}
 
@@ -270,4 +289,16 @@ class BaseController extends Controller
 		}
 	}
 
+	/**
+	 * @inheritdoc
+	 */
+	public function beforeAction($action)
+	{
+		if ( !$this->enableBasetActions AND in_array($action->id, $this->baseActions) )
+		{
+			throw new NotFoundHttpException('Page not found');
+		}
+
+		return parent::beforeAction($action);
+	}
 } 

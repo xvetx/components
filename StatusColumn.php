@@ -162,8 +162,8 @@ class StatusColumn extends DataColumn
 		if ( empty($this->optionsArray) )
 		{
 			$this->optionsArray = [
-				[0, 'No', 'warning'],
-				[1, 'Yes', 'success'],
+				[0, 'Нет', 'warning'],
+				[1, 'Да', 'success'],
 			];
 		}
 	}
