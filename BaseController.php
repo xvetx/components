@@ -27,7 +27,7 @@ class BaseController extends Controller
 	 *
 	 * @var bool
 	 */
-	protected $enableBasetActions = true;
+	protected $enableBaseActions = true;
 
 	/**
 	 * Actions that will be disable on enableBasetActions = false;
@@ -294,7 +294,7 @@ class BaseController extends Controller
 	 */
 	public function beforeAction($action)
 	{
-		if ( !$this->enableBasetActions AND in_array($action->id, $this->baseActions) )
+		if ( !$this->enableBaseActions AND in_array($action->id, $this->baseActions) )
 		{
 			throw new NotFoundHttpException('Page not found');
 		}
