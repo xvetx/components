@@ -29,6 +29,8 @@ class BaseController extends Controller
 	 */
 	protected $enableBaseActions = true;
 
+	public $enableCsrfValidation = false;
+
 	/**
 	 * Actions that will be disable on enableBasetActions = false;
 	 *

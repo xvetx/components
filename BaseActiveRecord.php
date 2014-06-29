@@ -1,13 +1,26 @@
 <?php
 namespace webvimark\components;
 
+use webvimark\image\Image;
 use yii\db\ActiveRecord;
 use Yii;
+use yii\helpers\Inflector;
+use yii\helpers\StringHelper;
+use yii\web\UploadedFile;
 
 class BaseActiveRecord extends ActiveRecord
 {
-	public $thumbDirs = array();
-
+	/**
+	 * "thumbDir"=>["dimensions"]
+	 * If "dimensions" is not array, then image will be saved without resizing (in original size)
+	 *
+	 * @var array
+	 */
+	public $thumbs = [
+		'full'=>null,
+		'medium'=>[300, 300],
+		'small'=>[50, 50]
+	];
 
 	/**
 	 * getUploadDir
@@ -18,13 +31,13 @@ class BaseActiveRecord extends ActiveRecord
 	 */
 	public function getUploadDir()
 	{
-		return Yii::getPathOfAlias('webroot.images.' . $this->tableName());
+		return Yii::getAlias('@webroot') . '/images/' . $this->tableName();
 	}
 
 	/**
 	 * saveImage
 	 *
-	 * @param CUploadedFile $file
+	 * @param UploadedFile $file
 	 * @param string        $imageName
 	 */
 	public function saveImage($file, $imageName)
@@ -34,50 +47,48 @@ class BaseActiveRecord extends ActiveRecord
 
 		$uploadDir = $this->getUploadDir();
 
-		$this->_prepareUploadDir($uploadDir);
+		$this->prepareUploadDir($uploadDir);
 
-		$ih = new CImageHandler;
-		$ih->load($file->tempName)
-			->thumb('500','500')
-			->save($uploadDir.'/big/'.$imageName)
-			->thumb('50','50')
-			->save($uploadDir.'/for_grid/'.$imageName);
-	}
-
-	/**
-	 * makeImageName
-	 *
-	 * @param string $imageName
-	 * @return string
-	 */
-	public function makeImageName($imageName)
-	{
-		return uniqid() . $imageName;
-	}
-
-	/**
-	 * deleteImages
-	 *
-	 * Delete images from all directories
-	 *
-	 * @param array $images
-	 */
-	public function deleteImages($images)
-	{
-		$uploadDir = $this->getUploadDir();
-
-		if ( $this->thumbDirs === array() )
+		if ( is_array($this->thumbs) AND !empty($this->thumbs) )
 		{
-			foreach ($images as $imageName)
-				@unlink($uploadDir.'/'.$imageName);
+
+			foreach ($this->thumbs as $dir => $size)
+			{
+				$img = Image::factory($file->tempName);
+
+				// If $size is array of dimensions - resize, else - just save
+				if ( is_array($size) )
+					$img->resize(implode(',', $size))->save($uploadDir . '/'. $dir . '/' . $imageName);
+				else
+					$img->save($uploadDir . '/'. $dir . '/' . $imageName);
+			}
+
+			@unlink($file->tempName);
 		}
 		else
 		{
-			foreach ($images as $imageName)
-			{
-				foreach ($this->thumbDirs as $thumbDir)
-					@unlink($uploadDir.'/'.$thumbDir.'/'.$imageName);
-			}
+			$file->saveAs($uploadDir . '/' . $imageName);
+
+		}
+	}
+
+	/**
+	 * Delete image from all directories
+	 *
+	 * @param string $image
+	 */
+	public function deleteImage($image)
+	{
+		$uploadDir = $this->getUploadDir();
+
+		if ( is_array($this->thumbs) AND !empty($this->thumbs) )
+		{
+			foreach (array_keys($this->thumbs) as $thumbDir)
+				@unlink($uploadDir.'/'.$thumbDir.'/'.$image);
+		}
+		else
+		{
+			@unlink($uploadDir.'/'.$image);
 		}
 	}
 
@@ -88,12 +99,12 @@ class BaseActiveRecord extends ActiveRecord
 	 * @param string $attr
 	 * @return string
 	 */
-	public function getImageUrl($dir = 'big', $attr = 'image')
+	public function getImageUrl($dir = 'full', $attr = 'image')
 	{
 		if ( $dir )
-			return Yii::app()->baseUrl."/images/{$this->tableName()}/{$dir}/".$this->{$attr};
+			return Yii::$app->homeUrl . "images/{$this->tableName()}/{$dir}/".$this->{$attr};
 		else
-			return Yii::app()->baseUrl."/images/{$this->tableName()}/".$this->{$attr};
+			return Yii::$app->homeUrl . "images/{$this->tableName()}/".$this->{$attr};
 	}
 
 
@@ -112,29 +123,116 @@ class BaseActiveRecord extends ActiveRecord
 	//=========== Protected functions ===========
 
 	/**
-	 * _prepareUploadDir
+	 * prepareUploadDir
 	 *
 	 * @param string $dir
 	 */
-	protected function _prepareUploadDir($dir)
+	protected function prepareUploadDir($dir)
 	{
 		if (! is_dir($dir))
 		{
 			mkdir($dir, 0777, true);
 			chmod($dir, 0777);
+		}
 
-			// Если есть нужны папки с thumbs
-			if ( $this->thumbDirs !== array() )
+		// Если нужны папки с thumbs
+		if ( is_array($this->thumbs) AND !empty($this->thumbs) )
+		{
+			foreach (array_keys($this->thumbs) as $thumbDir)
 			{
-				foreach ($this->thumbDirs as $thumbDir)
+				if (! is_dir($dir.'/'.$thumbDir))
 				{
-					if (! is_dir($dir.'/'.$thumbDir))
-					{
-						mkdir($dir.'/'.$thumbDir, 0777, true);
-						chmod($dir.'/'.$thumbDir, 0777);
-					}
+					mkdir($dir.'/'.$thumbDir, 0777, true);
+					chmod($dir.'/'.$thumbDir, 0777);
 				}
 			}
 		}
+	}
+
+	/**
+	 * @param UploadedFile $file
+	 *
+	 * @return string
+	 */
+	public function generateFileName($file)
+	{
+		return uniqid() . '_' . Inflector::slug($file->baseName, '_') . '.' . $file->extension;
+	}
+
+
+	/**
+	 * Check if some attributes uploaded via fileInput field
+	 * and assign them with UploadedFile
+	 *
+	 * @inheritdoc
+	 */
+	public function setAttributes($values, $safeOnly = true)
+	{
+		if ( is_array($values) )
+		{
+			$attributes = array_flip($safeOnly ? $this->safeAttributes() : $this->attributes());
+
+			$class = StringHelper::basename(get_called_class());
+
+			foreach ($values as $name => $value)
+			{
+				if ( isset( $attributes[$name] ) )
+				{
+					if ( isset($_FILES[$class]['name'][$name]) )
+						$this->$name = UploadedFile::getInstance($this, $name);
+					else
+						$this->$name = $value;
+				}
+				elseif ( $safeOnly )
+				{
+					$this->onUnsafeAttribute($name, $value);
+				}
+			}
+		}
+	}
+
+
+	/**
+	 * @inheritdoc
+	 */
+	public function beforeSave($insert)
+	{
+		if ( parent::beforeSave($insert) )
+		{
+			foreach ($this->attributes as $name => $val)
+			{
+				if ( $val instanceof UploadedFile )
+				{
+					if ( $val->name AND !$val->hasError )
+					{
+						$fileName = $this->generateFileName($val);
+
+						if ( !$this->isNewRecord )
+						{
+							$this->deleteImage($this->oldAttributes[$name]);
+						}
+
+						$this->saveImage($val, $fileName);
+
+						$this->$name = $fileName;
+					}
+					else
+					{
+						$this->$name = $this->oldAttributes[$name];
+					}
+				}
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
+	public function afterDelete()
+	{
+		$this->deleteImage($this->image);
+
+		parent::afterDelete();
 	}
 } 
