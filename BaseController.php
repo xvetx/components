@@ -224,7 +224,7 @@ class BaseController extends Controller
 
 			foreach ($models as $model)
 			{
-				$model->sorter = $sortArray[$model->id][0];
+				$model->sorter = $sortArray[$model->id];
 				$model->save(false);
 			}
 

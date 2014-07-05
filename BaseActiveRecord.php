@@ -107,6 +107,21 @@ class BaseActiveRecord extends ActiveRecord
 			return Yii::$app->homeUrl . "images/{$this->tableName()}/".$this->{$attr};
 	}
 
+	/**
+	 * getImagePath
+	 *
+	 * @param string|null $dir
+	 * @param string $attr
+	 * @return string
+	 */
+	public function getImagePath($dir = 'full', $attr = 'image')
+	{
+		if ( $dir )
+			return $this->getUploadDir() . "/{$dir}/".$this->{$attr};
+		else
+			return $this->getUploadDir() . "/".$this->{$attr};
+	}
+
 
 	//=========== Rules ===========
 
@@ -174,14 +189,27 @@ class BaseActiveRecord extends ActiveRecord
 
 			$class = StringHelper::basename(get_called_class());
 
+			$schema = $this->getTableSchema();
+
 			foreach ($values as $name => $value)
 			{
 				if ( isset( $attributes[$name] ) )
 				{
 					if ( isset($_FILES[$class]['name'][$name]) )
+					{
 						$this->$name = UploadedFile::getInstance($this, $name);
+					}
+					// Handle NULL Integrity constraint violation
+					elseif ( $value === '' AND $schema->getColumn($name)->type == 'integer' AND !$schema->getColumn($name)->allowNull)
+					{
+						$defaultValue = $schema->getColumn($name)->defaultValue;
+
+						$this->$name = ($defaultValue !== null) ? $defaultValue : 0;
+					}
 					else
+					{
 						$this->$name = $value;
+					}
 				}
 				elseif ( $safeOnly )
 				{
@@ -216,7 +244,7 @@ class BaseActiveRecord extends ActiveRecord
 
 						$this->$name = $fileName;
 					}
-					else
+					elseif ( !$this->isNewRecord )
 					{
 						$this->$name = $this->oldAttributes[$name];
 					}
