@@ -183,6 +183,8 @@ class BaseActiveRecord extends ActiveRecord
 	 */
 	public function setAttributes($values, $safeOnly = true)
 	{
+		parent::setAttributes($values, $safeOnly);
+
 		if ( is_array($values) )
 		{
 			$attributes = array_flip($safeOnly ? $this->safeAttributes() : $this->attributes());
@@ -206,14 +208,6 @@ class BaseActiveRecord extends ActiveRecord
 
 						$this->$name = ($defaultValue !== null) ? $defaultValue : 0;
 					}
-					else
-					{
-						$this->$name = $value;
-					}
-				}
-				elseif ( $safeOnly )
-				{
-					$this->onUnsafeAttribute($name, $value);
 				}
 			}
 		}
