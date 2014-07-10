@@ -185,6 +185,7 @@ class BaseActiveRecord extends ActiveRecord
 	{
 		parent::setAttributes($values, $safeOnly);
 
+		// Looking only for file attributes (and fix null error on fly)
 		if ( is_array($values) )
 		{
 			$attributes = array_flip($safeOnly ? $this->safeAttributes() : $this->attributes());
@@ -202,12 +203,17 @@ class BaseActiveRecord extends ActiveRecord
 						$this->$name = UploadedFile::getInstance($this, $name);
 					}
 					// Handle NULL Integrity constraint violation
-					elseif ( $value === '' AND $schema->getColumn($name)->type == 'integer' AND !$schema->getColumn($name)->allowNull)
-					{
-						$defaultValue = $schema->getColumn($name)->defaultValue;
-
-						$this->$name = ($defaultValue !== null) ? $defaultValue : 0;
-					}
+//					elseif ( $value === '' )
+//					{
+//						$column = $schema->getColumn($name);
+//
+//						if ( $column AND $schema->getColumn($name)->type == 'integer' AND !$schema->getColumn($name)->allowNull )
+//						{
+//							$defaultValue = $schema->getColumn($name)->defaultValue;
+//
+//							$this->$name = ($defaultValue !== null) ? $defaultValue : 0;
+//						}
+//					}
 				}
 			}
 		}
