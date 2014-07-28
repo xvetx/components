@@ -23,6 +23,24 @@ class BaseActiveRecord extends ActiveRecord
 	];
 
 	/**
+	 * @param mixed $condition
+	 *
+	 * @return bool
+	 */
+	public static function deleteIfExists($condition)
+	{
+		$model = static::findOne($condition);
+
+		if ( $model )
+		{
+			$model->delete();
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
 	 * getUploadDir
 	 *
 	 * + Создаёт директории, если их нет
@@ -84,11 +102,25 @@ class BaseActiveRecord extends ActiveRecord
 		if ( is_array($this->thumbs) AND !empty($this->thumbs) )
 		{
 			foreach (array_keys($this->thumbs) as $thumbDir)
-				@unlink($uploadDir.'/'.$thumbDir.'/'.$image);
+				unlink($uploadDir.'/'.$thumbDir.'/'.$image);
 		}
 		else
 		{
-			@unlink($uploadDir.'/'.$image);
+			unlink($uploadDir.'/'.$image);
+		}
+	}
+
+	/**
+	 * Provide array of image fields (like: ['logo', 'image'])
+	 * then $model->$imageField will be deleted from all thumb directories (or main dir if there are no thumbs)
+	 *
+	 * @param array $imageFields
+	 */
+	public function bulkDeleteImages($imageFields)
+	{
+		foreach ($imageFields as $imageField)
+		{
+			$this->deleteImage($this->$imageField);
 		}
 	}
 
@@ -192,7 +224,7 @@ class BaseActiveRecord extends ActiveRecord
 
 			$class = StringHelper::basename(get_called_class());
 
-			$schema = $this->getTableSchema();
+//			$schema = $this->getTableSchema();
 
 			foreach ($values as $name => $value)
 			{
@@ -257,10 +289,4 @@ class BaseActiveRecord extends ActiveRecord
 		return false;
 	}
 
-	public function afterDelete()
-	{
-		$this->deleteImage($this->image);
-
-		parent::afterDelete();
-	}
 } 

@@ -32,7 +32,7 @@ class AdminDefaultController extends BaseController
 	public $enableCsrfValidation = false;
 
 	/**
-	 * Actions that will be disable on enableBasetActions = false;
+	 * Actions that will be disable on enableBaseActions = false;
 	 *
 	 * @var array
 	 */
@@ -106,7 +106,7 @@ class AdminDefaultController extends BaseController
 
 		if ( $model->load(Yii::$app->request->post()) && $model->save() )
 		{
-			return $this->redirect(['view',	'id' => $model->id]);
+			return $this->redirect($this->getRedirectPage('create', $model));
 		}
 
 		return $this->renderIsAjax('create', compact('model'));
@@ -126,7 +126,7 @@ class AdminDefaultController extends BaseController
 
 		if ( $model->load(Yii::$app->request->post()) AND $model->save())
 		{
-			return $this->redirect(['view',	'id' => $model->id]);
+			return $this->redirect($this->getRedirectPage('update', $model));
 		}
 
 		return $this->renderIsAjax('update', compact('model'));
@@ -142,12 +142,11 @@ class AdminDefaultController extends BaseController
 	 */
 	public function actionDelete($id)
 	{
-		$this->findModel($id)->delete();
+		$model = $this->findModel($id);
+		$model->delete();
 
-		return $this->redirect(['index']);
+		return $this->redirect($this->getRedirectPage('delete', $model));
 	}
-
-
 	/**
 	 * @param string $attribute
 	 * @param int $id
@@ -176,6 +175,7 @@ class AdminDefaultController extends BaseController
 		}
 	}
 
+
 	/**
 	 * Deactivate all selected grid items
 	 */
@@ -192,7 +192,6 @@ class AdminDefaultController extends BaseController
 		}
 	}
 
-
 	/**
 	 * Deactivate all selected grid items
 	 */
@@ -202,9 +201,13 @@ class AdminDefaultController extends BaseController
 		{
 			$modelClass = $this->modelClass;
 
-			$modelClass::deleteAll(
-				['id'=>Yii::$app->request->post('selection', [])]
-			);
+			foreach (Yii::$app->request->post('selection', []) as $id)
+			{
+				$model = $modelClass::findOne($id);
+
+				if ( $model )
+					$model->delete();
+			}
 		}
 	}
 
@@ -230,6 +233,7 @@ class AdminDefaultController extends BaseController
 
 		}
 	}
+
 
 	/**
 	 * Set page size for grid
@@ -269,7 +273,7 @@ class AdminDefaultController extends BaseController
 	}
 
 	/**
-	 * Finds the Excursion model based on its primary key value.
+	 * Finds the model based on its primary key value.
 	 * If the model is not found, a 404 HTTP exception will be thrown.
 	 *
 	 * @param integer $id
@@ -291,6 +295,33 @@ class AdminDefaultController extends BaseController
 		}
 	}
 
+
+	/**
+	 * Define redirect page after update, create, delete, etc
+	 *
+	 * @param string       $action
+	 * @param ActiveRecord $model
+	 *
+	 * @return string|array
+	 */
+	protected function getRedirectPage($action, $model = null)
+	{
+		switch ($action)
+		{
+			case 'delete':
+				return ['index'];
+				break;
+			case 'update':
+				return ['view', 'id'=>$model->id];
+				break;
+			case 'create':
+				return ['view', 'id'=>$model->id];
+				break;
+			default:
+				return ['index'];
+		}
+	}
+
 	/**
 	 * @inheritdoc
 	 */
@@ -303,4 +334,4 @@ class AdminDefaultController extends BaseController
 
 		return parent::beforeAction($action);
 	}
-} 
+}

@@ -102,7 +102,7 @@ class StatusColumn extends DataColumn
 				$class = ($label === false) ? '' : "label label-{$label}";
 				$value = $widget->filter[$attributeValue];
 
-				$style = 'font-size:85%;';
+				$style = ($label === false) ? '' : 'font-size:85%;';
 				$data = '';
 
 				if ( ! empty($this->toggleUrl) )
