@@ -1,10 +1,10 @@
 <?php
 
 namespace webvimark\components;
+use app\webvimark\modules\UserManagement\components\AccessController;
+use Yii;
 
-use yii\web\Controller;
-
-class BaseController extends Controller
+class BaseController extends AccessController
 {
 
 } 

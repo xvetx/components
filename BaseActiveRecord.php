@@ -22,6 +22,7 @@ class BaseActiveRecord extends ActiveRecord
 		'small'=>[50, 50]
 	];
 
+	protected $_fileFields;
 	/**
 	 * @param mixed $condition
 	 *
@@ -102,11 +103,11 @@ class BaseActiveRecord extends ActiveRecord
 		if ( is_array($this->thumbs) AND !empty($this->thumbs) )
 		{
 			foreach (array_keys($this->thumbs) as $thumbDir)
-				unlink($uploadDir.'/'.$thumbDir.'/'.$image);
+				@unlink($uploadDir.'/'.$thumbDir.'/'.$image);
 		}
 		else
 		{
-			unlink($uploadDir.'/'.$image);
+			@unlink($uploadDir.'/'.$image);
 		}
 	}
 
@@ -232,7 +233,9 @@ class BaseActiveRecord extends ActiveRecord
 				{
 					if ( isset($_FILES[$class]['name'][$name]) )
 					{
-						$this->$name = UploadedFile::getInstance($this, $name);
+						$uploadedFile = UploadedFile::getInstance($this, $name);
+
+						$this->$name = ($uploadedFile === null) ? '' : $uploadedFile;
 					}
 					// Handle NULL Integrity constraint violation
 //					elseif ( $value === '' )

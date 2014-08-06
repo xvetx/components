@@ -276,7 +276,7 @@ class AdminDefaultController extends BaseController
 	 * Finds the model based on its primary key value.
 	 * If the model is not found, a 404 HTTP exception will be thrown.
 	 *
-	 * @param integer $id
+	 * @param mixed $id
 	 *
 	 * @return ActiveRecord the loaded model
 	 * @throws NotFoundHttpException if the model cannot be found
