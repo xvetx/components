@@ -23,6 +23,7 @@ class BaseActiveRecord extends ActiveRecord
 	];
 
 	protected $_fileFields;
+
 	/**
 	 * @param mixed $condition
 	 *
@@ -225,8 +226,6 @@ class BaseActiveRecord extends ActiveRecord
 
 			$class = StringHelper::basename(get_called_class());
 
-//			$schema = $this->getTableSchema();
-
 			foreach ($values as $name => $value)
 			{
 				if ( isset( $attributes[$name] ) )
@@ -237,18 +236,6 @@ class BaseActiveRecord extends ActiveRecord
 
 						$this->$name = ($uploadedFile === null) ? '' : $uploadedFile;
 					}
-					// Handle NULL Integrity constraint violation
-//					elseif ( $value === '' )
-//					{
-//						$column = $schema->getColumn($name);
-//
-//						if ( $column AND $schema->getColumn($name)->type == 'integer' AND !$schema->getColumn($name)->allowNull )
-//						{
-//							$defaultValue = $schema->getColumn($name)->defaultValue;
-//
-//							$this->$name = ($defaultValue !== null) ? $defaultValue : 0;
-//						}
-//					}
 				}
 			}
 		}
