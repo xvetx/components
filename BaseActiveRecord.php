@@ -1,10 +1,10 @@
 <?php
 namespace webvimark\components;
 
+use webvimark\helpers\LittleBigHelper;
 use webvimark\image\Image;
 use yii\db\ActiveRecord;
 use Yii;
-use yii\helpers\Inflector;
 use yii\helpers\StringHelper;
 use yii\web\UploadedFile;
 
@@ -204,7 +204,7 @@ class BaseActiveRecord extends ActiveRecord
 	 */
 	public function generateFileName($file)
 	{
-		return uniqid() . '_' . Inflector::slug($file->baseName, '_') . '.' . $file->extension;
+		return uniqid() . '_' . LittleBigHelper::slug($file->baseName, '_') . '.' . $file->extension;
 	}
 
 
