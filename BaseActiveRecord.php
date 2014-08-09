@@ -22,7 +22,6 @@ class BaseActiveRecord extends ActiveRecord
 		'small'=>[50, 50]
 	];
 
-	protected $_fileFields;
 
 	/**
 	 * @param mixed $condition
@@ -234,7 +233,14 @@ class BaseActiveRecord extends ActiveRecord
 					{
 						$uploadedFile = UploadedFile::getInstance($this, $name);
 
-						$this->$name = ($uploadedFile === null) ? '' : $uploadedFile;
+						if ( $uploadedFile )
+						{
+							$this->$name = $uploadedFile;
+						}
+						elseif ( ! $this->isNewRecord )
+						{
+							$this->$name = $this->oldAttributes[$name];
+						}
 					}
 				}
 			}
