@@ -29,7 +29,7 @@ class AdminDefaultController extends BaseController
 	 */
 	protected $enableBaseActions = true;
 
-	public $enableCsrfValidation = false;
+	public $enableCsrfValidation = true;
 
 	/**
 	 * Actions that will be disable on enableBaseActions = false;
