@@ -327,11 +327,17 @@ class AdminDefaultController extends BaseController
 	 */
 	public function beforeAction($action)
 	{
-		if ( !$this->enableBaseActions AND in_array($action->id, $this->baseActions) )
+		if ( parent::beforeAction($action) )
 		{
-			throw new NotFoundHttpException('Page not found');
+			if ( !$this->enableBaseActions AND in_array($action->id, $this->baseActions) )
+			{
+				throw new NotFoundHttpException('Page not found');
+			}
+
+			return true;
 		}
 
-		return parent::beforeAction($action);
+		return false;
+
 	}
 }
