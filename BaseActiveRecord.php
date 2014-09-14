@@ -135,9 +135,9 @@ class BaseActiveRecord extends ActiveRecord
 	public function getImageUrl($dir = 'full', $attr = 'image')
 	{
 		if ( $dir )
-			return Yii::$app->homeUrl . "images/{$this->tableName()}/{$dir}/".$this->{$attr};
+			return Yii::$app->request->baseUrl . "/images/{$this->tableName()}/{$dir}/".$this->{$attr};
 		else
-			return Yii::$app->homeUrl . "images/{$this->tableName()}/".$this->{$attr};
+			return Yii::$app->request->baseUrl . "/images/{$this->tableName()}/".$this->{$attr};
 	}
 
 	/**
