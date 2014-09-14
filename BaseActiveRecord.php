@@ -17,9 +17,9 @@ class BaseActiveRecord extends ActiveRecord
 	 * @var array
 	 */
 	public $thumbs = [
-		'full'=>null,
-		'medium'=>[300, 300],
-		'small'=>[50, 50]
+		'full'   => null,
+		'medium' => [300, 300],
+		'small'  => [50, 50]
 	];
 
 
