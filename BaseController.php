@@ -6,5 +6,4 @@ use Yii;
 
 class BaseController extends AccessController
 {
-
-} 
+}

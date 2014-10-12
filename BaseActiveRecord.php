@@ -168,14 +168,12 @@ class BaseActiveRecord extends ActiveRecord
 
 
 
-	//=========== Protected functions ===========
-
 	/**
 	 * prepareUploadDir
 	 *
 	 * @param string $dir
 	 */
-	protected function prepareUploadDir($dir)
+	public function prepareUploadDir($dir)
 	{
 		if (! is_dir($dir))
 		{
