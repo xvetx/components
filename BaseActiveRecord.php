@@ -6,6 +6,7 @@ use webvimark\image\Image;
 use yii\db\ActiveRecord;
 use Yii;
 use yii\helpers\StringHelper;
+use yii\web\NotFoundHttpException;
 use yii\web\UploadedFile;
 
 class BaseActiveRecord extends ActiveRecord
@@ -39,6 +40,28 @@ class BaseActiveRecord extends ActiveRecord
 		}
 
 		return false;
+	}
+
+
+	/**
+	 * Finds the model based on its primary key value.
+	 * If the model is not found, a 404 HTTP exception will be thrown.
+	 *
+	 * @param mixed $id
+	 *
+	 * @return static the loaded model
+	 * @throws NotFoundHttpException if the model cannot be found
+	 */
+	public static function findOneOrException($id)
+	{
+		if ( ($model = static::findOne($id)) !== null )
+		{
+			return $model;
+		}
+		else
+		{
+			throw new NotFoundHttpException('The requested page does not exist.');
+		}
 	}
 
 	/**
