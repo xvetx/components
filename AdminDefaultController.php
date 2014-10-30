@@ -76,7 +76,7 @@ class AdminDefaultController extends BaseController
 			]);
 		}
 
-		return $this->render('index', compact('dataProvider', 'searchModel'));
+		return $this->renderIsAjax('index', compact('dataProvider', 'searchModel'));
 	}
 
 	/**
