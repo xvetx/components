@@ -47,14 +47,14 @@ class BaseActiveRecord extends ActiveRecord
 	 * Finds the model based on its primary key value.
 	 * If the model is not found, a 404 HTTP exception will be thrown.
 	 *
-	 * @param mixed $id
+	 * @param mixed $condition
 	 *
 	 * @return static the loaded model
 	 * @throws NotFoundHttpException if the model cannot be found
 	 */
-	public static function findOneOrException($id)
+	public static function findOneOrException($condition)
 	{
-		if ( ($model = static::findOne($id)) !== null )
+		if ( ($model = static::findOne($condition)) !== null )
 		{
 			return $model;
 		}
