@@ -174,7 +174,7 @@ class StatusColumn extends DataColumn
 	protected function jsWithPjax()
 	{
 		$js = <<<JS
-		$("[data-type='grid-toggle-pjax']").on('click', function () {
+		$(document).off('click', "[data-type='grid-toggle-pjax']").on('click', "[data-type='grid-toggle-pjax']", function () {
 
 			$.get($(this).data('url')).success(function(){
 				$.pjax.reload({container: '#$this->pjaxId'});
@@ -192,7 +192,7 @@ JS;
 	protected function jsWithoutPjax()
 	{
 		$js = <<<JS
-		$("[data-type='grid-toggle']").on('click', function () {
+		$(document).off('click', "[data-type='grid-toggle']").on('click', "[data-type='grid-toggle']", function () {
 
 			window.location = $(this).data('url');
 		});

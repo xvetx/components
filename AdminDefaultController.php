@@ -38,12 +38,6 @@ class AdminDefaultController extends BaseController
 				  'bulkDeactivate', 'bulkDelete', 'gridSort', 'gridPageSize'];
 
 
-	/**
-	 * @var string
-	 */
-	public $layout = '//back';
-
-
 	public function behaviors()
 	{
 		return [
