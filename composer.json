@@ -3,7 +3,6 @@
 	"description": "Components for yii 2",
 	"require": {
 		"webvimark/image": "dev-master",
-		"webvimark/date-range-picker": "dev-master",
 		"webvimark/helpers": "dev-master"
 	},
 	"autoload": {
