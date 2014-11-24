@@ -151,7 +151,7 @@ class SorterColumn extends DataColumn
 		$pjaxId = '#'.$this->pjaxId;
 
 		$js = <<<JS
-		$(".grid-sort-button").on('click', function () {
+		$(document).off('click', ".grid-sort-button").on('click', ".grid-sort-button", function () {
 			var _t = $(this);
 			_t.addClass('disabled').html('$sortingText');
 

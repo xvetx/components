@@ -184,7 +184,6 @@ class BaseActiveRecord extends ActiveRecord
 	public function purgeXSS($attr)
 	{
 		$this->$attr = htmlspecialchars($this->$attr, ENT_QUOTES);
-		return true;
 	}
 
 	//----------- Rules -----------
