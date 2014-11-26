@@ -5,6 +5,7 @@ namespace webvimark\components;
 use yii\base\InvalidConfigException;
 use yii\grid\DataColumn;
 use yii\helpers\ArrayHelper;
+use Yii;
 
 /**
  * Class StatusColumn
@@ -143,7 +144,7 @@ class StatusColumn extends DataColumn
 	protected function setCellStyleOptions()
 	{
 		$this->contentOptions = ArrayHelper::merge(
-			['style'=>'text-align:center; width:10px; white-space:nowrap;'],
+			['style'=>'text-align:center; width:80px; white-space:nowrap;'],
 			$this->contentOptions
 		);
 	}
@@ -162,8 +163,8 @@ class StatusColumn extends DataColumn
 		if ( empty($this->optionsArray) )
 		{
 			$this->optionsArray = [
-				[0, 'Нет', 'warning'],
-				[1, 'Да', 'success'],
+				[0, Yii::t('yii', 'No'), 'warning'],
+				[1, Yii::t('yii', 'Yes'), 'success'],
 			];
 		}
 	}
