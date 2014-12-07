@@ -23,19 +23,26 @@ class AdminDefaultController extends BaseController
 	public $modelSearchClass;
 
 	/**
-	 * If false then 'index', 'update', 'grid-sort', etc. will be disabled
+	 * Actions that will be disabled
 	 *
-	 * @var bool
-	 */
-	protected $enableBaseActions = true;
-
-	/**
-	 * Actions that will be disable on enableBaseActions = false;
+	 * List of available actions:
+	 *
+	 * ['index', 'view', 'create', 'update', 'delete', 'toggle-attribute',
+	 * 'bulk-activate', 'bulk-deactivate', 'bulk-delete', 'grid-sort', 'grid-page-size']
 	 *
 	 * @var array
 	 */
-	protected $baseActions = ['index', 'update', 'create', 'view', 'delete', 'toggleAttribute', 'bulkActivate',
-				  'bulkDeactivate', 'bulkDelete', 'gridSort', 'gridPageSize'];
+	public $disabledActions = [];
+
+	/**
+	 * Opposite to $disabledActions. Every action except those will be disabled
+	 *
+	 * But if action listed both in $disabledActions and $enableOnlyActions
+	 * then it will be disabled
+	 *
+	 * @var array
+	 */
+	public $enableOnlyActions = [];
 
 
 	public function behaviors()
@@ -301,7 +308,12 @@ class AdminDefaultController extends BaseController
 	{
 		if ( parent::beforeAction($action) )
 		{
-			if ( !$this->enableBaseActions AND in_array($action->id, $this->baseActions) )
+			if ( $this->enableOnlyActions !== [] AND !in_array($action->id, $this->enableOnlyActions) )
+			{
+				throw new NotFoundHttpException('Page not found');
+			}
+
+			if ( in_array($action->id, $this->disabledActions) )
 			{
 				throw new NotFoundHttpException('Page not found');
 			}
