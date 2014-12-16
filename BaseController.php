@@ -1,11 +1,24 @@
 <?php
 
 namespace webvimark\components;
-use webvimark\modules\UserManagement\components\AccessController;
+use webvimark\modules\UserManagement\components\GhostAccessControl;
 use Yii;
+use yii\web\Controller;
 
-class BaseController extends AccessController
+class BaseController extends Controller
 {
+	/**
+	 * @return array
+	 */
+	public function behaviors()
+	{
+		return [
+			'ghost-access'=> [
+				'class' => GhostAccessControl::className(),
+			],
+		];
+	}
+
 	/**
 	 * Render ajax or usual depends on request
 	 *

@@ -5,7 +5,7 @@ namespace webvimark\components;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveRecord;
 use yii\filters\VerbFilter;
-use yii\web\Controller;
+use yii\helpers\ArrayHelper;
 use yii\web\Cookie;
 use yii\web\NotFoundHttpException;
 use Yii;
@@ -47,14 +47,14 @@ class AdminDefaultController extends BaseController
 
 	public function behaviors()
 	{
-		return [
+		return ArrayHelper::merge(parent::behaviors(),[
 			'verbs' => [
 				'class' => VerbFilter::className(),
 				'actions' => [
 					'delete' => ['post'],
 				],
 			],
-		];
+		]);
 	}
 
 	/**
