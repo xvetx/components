@@ -35,7 +35,7 @@ class AdminDefaultController extends BaseController
 	public $disabledActions = [];
 
 	/**
-	 * Opposite to $disabledActions. Every action except those will be disabled
+	 * Opposite to $disabledActions. Every action from AdminDefaultController except those will be disabled
 	 *
 	 * But if action listed both in $disabledActions and $enableOnlyActions
 	 * then it will be disabled
@@ -43,6 +43,14 @@ class AdminDefaultController extends BaseController
 	 * @var array
 	 */
 	public $enableOnlyActions = [];
+
+	/**
+	 * List of actions in this controller. Needed fo $enableOnlyActions
+	 *
+	 * @var array
+	 */
+	protected $_implementedActions = ['index', 'view', 'create', 'update', 'delete', 'toggle-attribute',
+		'bulk-activate', 'bulk-deactivate', 'bulk-delete', 'grid-sort', 'grid-page-size'];
 
 
 	public function behaviors()
@@ -308,7 +316,7 @@ class AdminDefaultController extends BaseController
 	{
 		if ( parent::beforeAction($action) )
 		{
-			if ( $this->enableOnlyActions !== [] AND !in_array($action->id, $this->enableOnlyActions) )
+			if ( $this->enableOnlyActions !== [] AND in_array($action->id, $this->_implementedActions) AND !in_array($action->id, $this->enableOnlyActions) )
 			{
 				throw new NotFoundHttpException('Page not found');
 			}
