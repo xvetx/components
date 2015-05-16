@@ -278,7 +278,7 @@ class AdminDefaultController extends BaseController
 		}
 		else
 		{
-			throw new NotFoundHttpException('The requested page does not exist.');
+			throw new NotFoundHttpException(Yii::t('yii', 'Page not found.'));
 		}
 	}
 
