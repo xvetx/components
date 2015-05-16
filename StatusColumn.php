@@ -110,9 +110,12 @@ class StatusColumn extends DataColumn
 				{
 					$style .= 'cursor:pointer;';
 
-					preg_match('/_\w+_/',$this->toggleUrl, $matches);
-					$idAttribute = trim($matches[0], '_');
-					$toggleUrl = str_replace($matches[0], $model->{$idAttribute}, $this->toggleUrl);
+					preg_match('/=_\w+_/',$this->toggleUrl, $matches);
+
+					$idAttributePlaceholder = ltrim($matches[0], '=');
+					$idAttribute = trim($idAttributePlaceholder, '_');
+
+					$toggleUrl = str_replace($idAttributePlaceholder, $model->{$idAttribute}, $this->toggleUrl);
 
 					$dataType = empty($this->pjaxId) ? 'grid-toggle' : 'grid-toggle-pjax';
 					$data .= "data-type='{$dataType}'";
