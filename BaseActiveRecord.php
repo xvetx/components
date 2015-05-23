@@ -73,7 +73,7 @@ class BaseActiveRecord extends ActiveRecord
 	 */
 	public function getUploadDir()
 	{
-		return Yii::getAlias('@webroot') . '/images/' . $this->tableName();
+		return Yii::getAlias('@webroot') . '/images/' . trim($this->tableName(), '{}%');
 	}
 
 	/**
