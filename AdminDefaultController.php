@@ -23,6 +23,16 @@ class AdminDefaultController extends BaseController
 	public $modelSearchClass;
 
 	/**
+	 * @var string
+	 */
+	public $scenarioOnCreate;
+
+	/**
+	 * @var string
+	 */
+	public $scenarioOnUpdate;
+
+	/**
 	 * Actions that will be disabled
 	 *
 	 * List of available actions:
@@ -111,9 +121,16 @@ class AdminDefaultController extends BaseController
 	{
 		$model = new $this->modelClass;
 
+		if ( $this->scenarioOnCreate )
+		{
+			$model->scenario = $this->scenarioOnCreate;
+		}
+
 		if ( $model->load(Yii::$app->request->post()) && $model->save() )
 		{
-			return $this->redirect($this->getRedirectPage('create', $model));
+			$redirect = $this->getRedirectPage('create', $model);
+
+			return $redirect === false ? '' : $this->redirect($redirect);
 		}
 
 		return $this->renderIsAjax('create', compact('model'));
@@ -131,9 +148,16 @@ class AdminDefaultController extends BaseController
 	{
 		$model = $this->findModel($id);
 
+		if ( $this->scenarioOnUpdate )
+		{
+			$model->scenario = $this->scenarioOnUpdate;
+		}
+
 		if ( $model->load(Yii::$app->request->post()) AND $model->save())
 		{
-			return $this->redirect($this->getRedirectPage('update', $model));
+			$redirect = $this->getRedirectPage('update', $model);
+
+			return $redirect === false ? '' : $this->redirect($redirect);
 		}
 
 		return $this->renderIsAjax('update', compact('model'));
@@ -152,7 +176,9 @@ class AdminDefaultController extends BaseController
 		$model = $this->findModel($id);
 		$model->delete();
 
-		return $this->redirect($this->getRedirectPage('delete', $model));
+		$redirect = $this->getRedirectPage('delete', $model);
+
+		return $redirect === false ? '' : $this->redirect($redirect);
 	}
 	/**
 	 * @param string $attribute
@@ -296,13 +322,13 @@ class AdminDefaultController extends BaseController
 		switch ($action)
 		{
 			case 'delete':
-				return ['index'];
+				return Yii::$app->request->isAjax ? false : ['index'];
 				break;
 			case 'update':
-				return ['view', 'id'=>$model->id];
+				return Yii::$app->request->isAjax ? false : ['view', 'id'=>$model->id];
 				break;
 			case 'create':
-				return ['view', 'id'=>$model->id];
+				return Yii::$app->request->isAjax ? false : ['view', 'id'=>$model->id];
 				break;
 			default:
 				return ['index'];
