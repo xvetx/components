@@ -92,9 +92,15 @@ class StatusColumn extends DataColumn
 			$this->_labelClasses[$option[0]] = $option[2];
 		}
 
-		$this->value = function($model, $key, $index, $widget)
-		{
-			$attributeValue = $model->{$this->attribute};
+        if ($this->value instanceof \Closure) {
+            $userFunc = $this->value;
+        } else {
+            $userFunc = function ($model, $key, $index, $widget) {
+                return $model->{$this->attribute};
+            };
+        }
+        $this->value = function ($model, $key, $index, $widget) use ($userFunc) {
+            $attributeValue = call_user_func($userFunc, $model, $key, $index, $widget);
 
 			if ( isset($widget->_labelClasses[$attributeValue], $widget->filter[$attributeValue]) )
 			{
