@@ -5,6 +5,7 @@ use webvimark\helpers\LittleBigHelper;
 use webvimark\image\Image;
 use yii\db\ActiveRecord;
 use Yii;
+use yii\helpers\FileHelper;
 use yii\helpers\StringHelper;
 use yii\web\NotFoundHttpException;
 use yii\web\UploadedFile;
@@ -132,6 +133,16 @@ class BaseActiveRecord extends ActiveRecord
 		{
 			@unlink($uploadDir.'/'.$image);
 		}
+
+		// Delete all cropped images from this object
+		$croppedImages = FileHelper::findFiles($uploadDir.'/_cropped', [
+			'only'   => ['*_|_' . $image],
+		]);
+
+		foreach ($croppedImages as $croppedImage)
+		{
+			@unlink($croppedImage);
+		}
 	}
 
 	/**
@@ -158,9 +169,9 @@ class BaseActiveRecord extends ActiveRecord
 	public function getImageUrl($dir = 'full', $attr = 'image')
 	{
 		if ( $dir )
-			return Yii::$app->request->baseUrl . "/images/".trim($this->tableName(), '{}%')."/{$dir}/".$this->{$attr};
+			return Yii::$app->request->baseUrl . '/images/'.trim($this->tableName(), '{}%')."/{$dir}/".$this->{$attr};
 		else
-			return Yii::$app->request->baseUrl . "/images/".trim($this->tableName(), '{}%')."/".$this->{$attr};
+			return Yii::$app->request->baseUrl . '/images/'.trim($this->tableName(), '{}%').'/'.$this->{$attr};
 	}
 
 	/**
@@ -175,9 +186,72 @@ class BaseActiveRecord extends ActiveRecord
 		if ( $dir )
 			return $this->getUploadDir() . "/{$dir}/".$this->{$attr};
 		else
-			return $this->getUploadDir() . "/".$this->{$attr};
+			return $this->getUploadDir() . '/'.$this->{$attr};
 	}
 
+	/**
+	 * @param integer $width
+	 * @param integer $height
+	 * @param string  $attr
+	 *
+	 * @return string
+	 */
+	public function getCroppedImagePath($width, $height, $attr = 'image')
+	{
+		$dir = $this->getUploadDir() . '/_cropped';
+
+		if (! is_dir($dir))
+		{
+			mkdir($dir, 0777, true);
+			chmod($dir, 0777);
+		}
+
+		return $dir . '/' . $width . '_' . $height . '_|_' . $this->{$attr};
+	}
+
+	/**
+	 * @param integer       $width
+	 * @param integer     $height
+	 * @param string $dir
+	 * @param string $attr
+	 *
+	 * @return string
+	 */
+	public function getCroppedImage($width, $height, $dir = 'full', $attr = 'image')
+	{
+		if ( !is_file($this->getCroppedImagePath($width, $height, $attr)) && is_file($this->getImagePath($dir, $attr)) )
+		{
+			$image = Image::factory($this->getImagePath($dir, $attr));
+
+			$old_aspect = $image->width / $image->height;
+			$new_aspect = $width / $height;
+
+			if ($old_aspect == 1)
+			{
+				if ($width > $height)
+				{
+					$image->resize($width, $height, Image::WIDTH);
+				}
+				else
+				{
+					$image->resize($width, $height, Image::HEIGHT);
+				}
+			}
+			elseif ($old_aspect < $new_aspect)
+			{
+				$image->resize($width, $height, Image::WIDTH);
+			}
+			else
+			{
+				$image->resize($width, $height, Image::HEIGHT);
+			}
+
+			$image->crop($width, $height);
+			$image->save($this->getCroppedImagePath($width, $height, $attr));
+		}
+
+		return Yii::$app->request->baseUrl . '/images/' . trim($this->tableName(), '{}%') . '/_cropped/' .  $width . '_' . $height . '_|_' . $this->{$attr};
+	}
 
 	//=========== Rules ===========
 
