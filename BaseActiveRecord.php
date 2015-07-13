@@ -135,13 +135,16 @@ class BaseActiveRecord extends ActiveRecord
 		}
 
 		// Delete all cropped images from this object
-		$croppedImages = FileHelper::findFiles($uploadDir.'/_cropped', [
-			'only'   => ['*_|_' . $image],
-		]);
-
-		foreach ($croppedImages as $croppedImage)
+		if ( is_dir($uploadDir . '/_cropped') )
 		{
-			@unlink($croppedImage);
+			$croppedImages = FileHelper::findFiles($uploadDir.'/_cropped', [
+				'only'   => ['*_|_' . $image],
+			]);
+
+			foreach ($croppedImages as $croppedImage)
+			{
+				@unlink($croppedImage);
+			}
 		}
 	}
 
