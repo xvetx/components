@@ -2,16 +2,60 @@
 namespace webvimark\components;
 
 use webvimark\helpers\LittleBigHelper;
+use webvimark\helpers\Singleton;
 use webvimark\image\Image;
 use yii\db\ActiveRecord;
 use Yii;
+use yii\db\Query;
 use yii\helpers\FileHelper;
 use yii\helpers\StringHelper;
+use yii\validators\Validator;
 use yii\web\NotFoundHttpException;
 use yii\web\UploadedFile;
 
 class BaseActiveRecord extends ActiveRecord
 {
+	// ================= Timestamps config =================
+
+	/**
+	 * Replacement of the TimestampBehavior
+	 *
+	 * @var bool
+	 */
+	protected $_timestamp_enabled = false;
+
+	/**
+	 * Replacement of the TimestampBehavior
+	 *
+	 * @var array
+	 */
+	protected $_timestamp_attributes = [
+		'create_attribute'  => 'created_at',
+		'update_attribute'  => 'updated_at',
+	];
+
+
+	// ================= Multilingual config =================
+
+	protected $_i18n_enabled = false;
+
+	/**
+	 * @var array
+	 */
+	protected $_i18n_attributes = [];
+
+	/**
+	 * @var string
+	 */
+	protected $_i18n_table = 'ml_translations';
+
+	/**
+	 * @var array
+	 */
+	protected $_i18n_admin_routes = [];
+
+
+
 	/**
 	 * "thumbDir"=>["dimensions"]
 	 * If "dimensions" is not array, then image will be saved without resizing (in original size)
@@ -24,6 +68,325 @@ class BaseActiveRecord extends ActiveRecord
 		'small'  => [50, 50]
 	];
 
+
+
+	/**
+	 * @inheritdoc
+	 */
+	public function __set($name, $value)
+	{
+		if ( $this->_i18n_enabled && in_array($name, $this->_getI18NAttributes()) )
+			$this->$name = $value;
+		else
+			parent::__set($name, $value);
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function attributes()
+	{
+		if ( $this->_i18n_enabled )
+		{
+			return array_merge(parent::attributes(), $this->_getI18NAttributes());
+		}
+
+		return parent::attributes();
+	}
+
+
+	public function init()
+	{
+		parent::init();
+
+		$this->_I18NInitialization();
+	}
+
+
+	/**
+	 * TimestampBehavior replacement
+	 */
+	protected function _timeStampBehavior()
+	{
+		if ( $this->_timestamp_enabled )
+		{
+			$this->{$this->_timestamp_attributes['update_attribute']} = time();
+
+			if ( $this->isNewRecord )
+			{
+				$this->{$this->_timestamp_attributes['create_attribute']} = time();
+			}
+		}
+	}
+
+	// ================= I18N methods starts here =================
+
+	/**
+	 * @param boolean $insert
+	 */
+	private function _preventI18NOverwritingInNonAdminRoutes($insert)
+	{
+		if ( $this->_i18n_enabled && !$insert && !in_array(Yii::$app->requestedRoute, $this->_i18n_admin_routes) )
+		{
+			foreach ($this->_i18n_attributes as $i18nAttribute)
+			{
+				if ( isset($this->oldAttributes[$i18nAttribute]) )
+				{
+
+				}
+			}
+
+		}
+	}
+
+	/**
+	 * Create string validators for virtual i18n attributes (like name_ru)
+	 */
+	private function _I18NInitialization()
+	{
+		if ( $this->_i18n_enabled )
+		{
+			$singletonKey = 'i18n_initialize' . get_class($this);
+
+			$initialized = Singleton::getData($singletonKey);
+
+			if ( !$initialized )
+			{
+				// Remove unnecessary "/" from admin routes
+				array_walk($this->_i18n_admin_routes, function(&$val, $key) {
+					$val = trim($val, '/');
+				});
+
+				foreach ($this->_getI18NAttributes() as $attribute)
+				{
+					$validators = $this->getActiveValidators($attribute);
+
+					if ( empty($validators) )
+					{
+						$this->getValidators()
+							->append(Validator::createValidator('string', $this, $attribute));
+					}
+				}
+
+				Singleton::setData($singletonKey, true);
+			}
+		}
+	}
+
+	/**
+	 * @param boolean $insert
+	 */
+	private function _saveI18NAttributes($insert)
+	{
+		if ( $this->_i18n_enabled )
+		{
+			foreach ($this->_getI18NAttributes() as $attribute)
+			{
+				if ( isset($this->$attribute) AND $this->$attribute !== null)
+				{
+					$tmp = explode('_', $attribute);
+
+					$language = array_pop($tmp);
+
+					$originalAttribute = implode('_', $tmp);
+
+					// Update I18N attribute only if current route is in admin routes
+					if ( !$insert )
+					{
+						$oldValue = (new Query())
+							->select('value')
+							->from($this->_i18n_table)
+							->where([
+								'table_name' => $this->getTableSchema()->fullName,
+								'model_id'   => $this->primaryKey,
+								'attribute'  => $originalAttribute,
+								'lang'       => $language,
+							])
+							->limit(1)
+							->scalar();
+
+						if ( $oldValue === false AND $this->$attribute !== '' )
+						{
+							$this->_i18nInsertHelper($originalAttribute, $language, $attribute);
+						}
+						elseif ( $oldValue != $this->$attribute )
+						{
+							$this->_i18nUpdateHelper($originalAttribute, $language, $attribute);
+						}
+					}
+					elseif ( $this->$attribute !== '' ) // Insert only non empty values
+					{
+						$this->_i18nInsertHelper($originalAttribute, $language, $attribute);
+					}
+				}
+			}
+		}
+	}
+
+	private function _i18nInsertHelper($originalAttribute, $language, $attribute)
+	{
+		$this->getDb()->createCommand()
+			->insert($this->_i18n_table, [
+				'table_name' => $this->getTableSchema()->fullName,
+				'attribute'  => $originalAttribute,
+				'model_id'   => $this->primaryKey,
+				'lang'       => $language,
+				'value'      => $this->$attribute,
+			])
+			->execute();
+	}
+	private function _i18nUpdateHelper($originalAttribute, $language, $attribute)
+	{
+		$this->getDb()->createCommand()
+			->update($this->_i18n_table, ['value'=>$this->$attribute], [
+				'table_name' => $this->getTableSchema()->fullName,
+				'attribute'  => $originalAttribute,
+				'model_id'   => $this->primaryKey,
+				'lang'       => $language,
+			])
+			->execute();
+	}
+
+	/**
+	 * Delete translated attributes
+	 */
+	private function _deleteI18NAttributes()
+	{
+		if ( $this->_i18n_enabled )
+		{
+			$this->getDb()->createCommand()
+				->delete($this->_i18n_table, [
+					'table_name' => $this->getTableSchema()->fullName,
+					'model_id'   => $this->primaryKey,
+				])
+				->execute();
+		}
+	}
+
+	private function _findI18NAttributes()
+	{
+		if ( $this->_i18n_enabled )
+		{
+			if ( in_array(Yii::$app->requestedRoute, $this->_i18n_admin_routes) )
+			{
+				$translations = $this->mlGetTranslations();
+
+				$replaceOriginalAttributes = false;
+			}
+			else
+			{
+				$translations = $this->mlGetLanguageSpecificTranslations();
+
+				$replaceOriginalAttributes = Yii::$app->language !== Yii::$app->params['mlConfig']['default_language'];
+			}
+
+			foreach ($translations as $translate)
+			{
+				if ( $this->primaryKey == $translate['model_id'] )
+				{
+					if ( $replaceOriginalAttributes )
+					{
+						if ( $translate['lang'] == Yii::$app->language )
+						{
+							$this->{$translate['attribute']} = $translate['value'];
+						}
+					}
+					elseif ( isset(Yii::$app->params['mlConfig']['languages'][$translate['lang']]) )
+					{
+						$attribute = $translate['attribute'] . '_' . $translate['lang'];
+
+						$this->$attribute = $translate['value'];
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * @return array
+	 */
+	private function mlGetTranslations()
+	{
+		$values = Singleton::getData('_ml_' . $this->getTableSchema()->fullName);
+
+		if ( $values === false )
+		{
+			$values = (new Query())
+				->select(['model_id', 'attribute', 'value', 'lang'])
+				->from($this->_i18n_table)
+				->where([
+					'table_name' => $this->getTableSchema()->fullName,
+				])
+				->all();
+
+			Singleton::setData('_ml_' . $this->getTableSchema()->fullName, $values);
+		}
+
+		return $values;
+	}
+
+
+	/**
+	 * @param null|string $language
+	 *
+	 * @return array
+	 */
+	private function mlGetLanguageSpecificTranslations($language = null)
+	{
+		if ( !$language )
+			$language = Yii::$app->language;
+
+		$values = Singleton::getData('_ml_' . $this->getTableSchema()->fullName . '_' . $language);
+
+		if ( $values === false )
+		{
+			$values = (new Query())
+				->select(['model_id', 'attribute', 'value', 'lang'])
+				->from($this->_i18n_table)
+				->where([
+					'table_name' => $this->getTableSchema()->fullName,
+					'lang'       => $language,
+				])
+				->all();
+
+			Singleton::setData('_ml_' . $this->getTableSchema()->fullName . '_' . $language, $values);
+		}
+
+		return $values;
+	}
+
+	/**
+	 * @return array
+	 */
+	private function _getI18NAttributes()
+	{
+		$singletonKey = '_mlAttributes_' . get_class($this);
+
+		$mlAttributes = Singleton::getData($singletonKey);
+
+		if ( $mlAttributes === false )
+		{
+			$mlAttributes = [];
+
+			$languages = Yii::$app->params['mlConfig']['languages'];
+			unset($languages[Yii::$app->params['mlConfig']['default_language']]);
+
+			foreach ($languages as $languageCode => $languageName)
+			{
+				foreach ($this->_i18n_attributes as $attribute)
+				{
+					$mlAttributes[] = $attribute . '_' . $languageCode;
+				}
+			}
+
+			Singleton::setData($singletonKey, $mlAttributes);
+		}
+
+		return $mlAttributes;
+	}
+
+
+	// ----------------- I18N methods ends here -----------------
 
 	/**
 	 * @param mixed $condition
@@ -344,6 +707,8 @@ class BaseActiveRecord extends ActiveRecord
 		}
 	}
 
+	// ================= Events =================
+
 
 	/**
 	 * @inheritdoc
@@ -352,6 +717,10 @@ class BaseActiveRecord extends ActiveRecord
 	{
 		if ( parent::beforeSave($insert) )
 		{
+			$this->_timeStampBehavior();
+
+//			$this->_preventI18NOverwritingInNonAdminRoutes($insert);
+
 			foreach ($this->attributes as $name => $val)
 			{
 				if ( $val instanceof UploadedFile )
@@ -382,4 +751,34 @@ class BaseActiveRecord extends ActiveRecord
 		return false;
 	}
 
-} 
+	/**
+	 * @inheritdoc
+	 */
+	public function afterDelete()
+	{
+		$this->_deleteI18NAttributes();
+
+		parent::afterDelete();
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function afterSave($insert, $changedAttributes)
+	{
+		$this->_saveI18NAttributes($insert);
+
+		parent::afterSave($insert, $changedAttributes);
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function afterFind()
+	{
+		$this->_findI18NAttributes();
+
+		parent::afterFind();
+	}
+
+}
