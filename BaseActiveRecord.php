@@ -15,7 +15,7 @@ use yii\web\UploadedFile;
 
 class BaseActiveRecord extends ActiveRecord
 {
-	// ================= Timestamps config =================
+	// ================= Timestamps config starts =================
 
 	/**
 	 * Replacement of the TimestampBehavior
@@ -34,8 +34,10 @@ class BaseActiveRecord extends ActiveRecord
 		'update_attribute'  => 'updated_at',
 	];
 
+	// ----------------- Timestamps config ends -----------------
 
-	// ================= Multilingual config =================
+
+	// ================= Multilingual config starts =================
 
 	protected $_i18n_enabled = false;
 
@@ -45,15 +47,16 @@ class BaseActiveRecord extends ActiveRecord
 	protected $_i18n_attributes = [];
 
 	/**
-	 * @var string
-	 */
-	protected $_i18n_table = 'ml_translations';
-
-	/**
 	 * @var array
 	 */
 	protected $_i18n_admin_routes = [];
 
+	/**
+	 * @var string
+	 */
+	protected $_i18n_table = 'ml_translations';
+
+	// ----------------- Multilingual config ends -----------------
 
 
 	/**
@@ -369,7 +372,7 @@ class BaseActiveRecord extends ActiveRecord
 			$mlAttributes = [];
 
 			$languages = Yii::$app->params['mlConfig']['languages'];
-			unset($languages[Yii::$app->params['mlConfig']['default_language']]);
+//			unset($languages[Yii::$app->params['mlConfig']['default_language']]);
 
 			foreach ($languages as $languageCode => $languageName)
 			{

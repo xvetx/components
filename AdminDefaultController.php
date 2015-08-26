@@ -195,14 +195,14 @@ class AdminDefaultController extends BaseController
 	/**
 	 * Activate all selected grid items
 	 */
-	public function actionBulkActivate()
+	public function actionBulkActivate($attribute = 'active')
 	{
 		if ( Yii::$app->request->post('selection') )
 		{
 			$modelClass = $this->modelClass;
 
 			$modelClass::updateAll(
-				['active'=>1],
+				[$attribute=>1],
 				['id'=>Yii::$app->request->post('selection', [])]
 			);
 		}
@@ -212,14 +212,14 @@ class AdminDefaultController extends BaseController
 	/**
 	 * Deactivate all selected grid items
 	 */
-	public function actionBulkDeactivate()
+	public function actionBulkDeactivate($attribute = 'active')
 	{
 		if ( Yii::$app->request->post('selection') )
 		{
 			$modelClass = $this->modelClass;
 
 			$modelClass::updateAll(
-				['active'=>0],
+				[$attribute=>0],
 				['id'=>Yii::$app->request->post('selection', [])]
 			);
 		}
