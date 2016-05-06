@@ -4,6 +4,7 @@ namespace webvimark\components;
 use webvimark\helpers\LittleBigHelper;
 use webvimark\helpers\Singleton;
 use webvimark\image\Image;
+use yii\caching\TagDependency;
 use yii\db\ActiveRecord;
 use Yii;
 use yii\db\Query;
@@ -15,6 +16,18 @@ use yii\web\UploadedFile;
 
 class BaseActiveRecord extends ActiveRecord
 {
+	/**
+	 * For how long store cache in mainCache() function
+	 */
+	const COMMON_CACHE_TIME = 2592000; // 1 month
+
+	/**
+	 * If true, than afterSave() and afterDelete() cache dependency with static::getCacheTag() will be invalidated
+	 *
+	 * @var bool
+	 */
+	protected $_enable_common_cache = false;
+
 	// ================= Timestamps config starts =================
 
 	/**
@@ -71,7 +84,39 @@ class BaseActiveRecord extends ActiveRecord
 		'small'  => [50, 50]
 	];
 
+	/**
+	 * Used in flush cache after save and delete. So you can always can be sure that your cache is valid
+	 *
+	 * @return string
+	 */
+	public static function getCacheTag()
+	{
+		return get_called_class() . '_common_cache';
+	}
 
+	/**
+	 * Reset class-specific cache by tag
+	 */
+	public static function resetCache()
+	{
+		TagDependency::invalidate(Yii::$app->cache, static::getCacheTag());
+	}
+
+	/**
+	 * @param callable $callable
+	 * @param array    $tags
+	 *
+	 * @return mixed
+	 */
+	public static function mainCache(callable $callable, $tags = [])
+	{
+		if ( $tags === [] )
+		{
+			$tags = static::getCacheTag();
+		}
+
+		return static::getDb()->cache($callable, static::COMMON_CACHE_TIME, new TagDependency(['tags'=>$tags]));
+	}
 
 	/**
 	 * @inheritdoc
@@ -270,7 +315,7 @@ class BaseActiveRecord extends ActiveRecord
 	{
 		if ( $this->_i18n_enabled )
 		{
-			if ( in_array(Yii::$app->requestedRoute, $this->_i18n_admin_routes) )
+			if ( php_sapi_name() === 'cli' || in_array(Yii::$app->requestedRoute, $this->_i18n_admin_routes) )
 			{
 				$translations = $this->mlGetTranslations();
 
@@ -398,6 +443,7 @@ class BaseActiveRecord extends ActiveRecord
 	 */
 	public static function deleteIfExists($condition)
 	{
+		/** @var BaseActiveRecord $model */
 		$model = static::findOne($condition);
 
 		if ( $model )
@@ -761,6 +807,11 @@ class BaseActiveRecord extends ActiveRecord
 	{
 		$this->_deleteI18NAttributes();
 
+		if ( $this->_enable_common_cache )
+		{
+			TagDependency::invalidate(Yii::$app->cache, static::getCacheTag());
+		}
+
 		parent::afterDelete();
 	}
 
@@ -770,6 +821,11 @@ class BaseActiveRecord extends ActiveRecord
 	public function afterSave($insert, $changedAttributes)
 	{
 		$this->_saveI18NAttributes($insert);
+
+		if ( $this->_enable_common_cache )
+		{
+			TagDependency::invalidate(Yii::$app->cache, static::getCacheTag());
+		}
 
 		parent::afterSave($insert, $changedAttributes);
 	}
