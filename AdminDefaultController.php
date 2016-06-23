@@ -63,18 +63,6 @@ class AdminDefaultController extends BaseController
 		'bulk-activate', 'bulk-deactivate', 'bulk-delete', 'grid-sort', 'grid-page-size'];
 
 
-	public function behaviors()
-	{
-		return ArrayHelper::merge(parent::behaviors(),[
-			'verbs' => [
-				'class' => VerbFilter::className(),
-				'actions' => [
-					'delete' => ['post'],
-				],
-			],
-		]);
-	}
-
 	/**
 	 * Lists all models.
 	 * @return mixed
