@@ -310,7 +310,8 @@ class AdminDefaultController extends BaseController
 		switch ($action)
 		{
 			case 'delete':
-				return Yii::$app->request->isAjax ? false : ['index'];
+                // Post and ajax request used in grid with pjax. To render normal page we have to redirect request to ['index']
+				return Yii::$app->request->isAjax && !Yii::$app->request->isPost ? false : ['index'];
 				break;
 			case 'update':
 				return Yii::$app->request->isAjax ? false : ['view', 'id'=>$model->id];
