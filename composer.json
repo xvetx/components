@@ -1,13 +1,25 @@
 {
-	"name": "webvimark/components",
+	"name": "xvetx/components",
+	"type": "yii2-extension",
+	"keywords": ["yii2","yii2-user","user-management"],
 	"description": "Components for yii 2",
+	"authors": [
+		{
+			"name": "Xvetx",
+			"email": "xvetx2013t@gmail.com"
+		},
+		{
+			"name": "webvimark"
+		}
+	],
+	"license": "BSD-3-Clause",
 	"require": {
 		"webvimark/image": "^1.0.0",
 		"webvimark/helpers": "^1.0.0"
 	},
 	"autoload": {
 		"psr-4": {
-			"webvimark\\components\\": ""
+			"xvetx\\components\\": ""
 		}
 	}
 }

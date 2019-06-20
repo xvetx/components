@@ -1,7 +1,7 @@
 <?php
 
-namespace webvimark\components;
-use webvimark\modules\UserManagement\components\GhostAccessControl;
+namespace xvetx\components;
+use xvetx\modules\UserManagement\components\GhostAccessControl;
 use Yii;
 use yii\web\Controller;
 

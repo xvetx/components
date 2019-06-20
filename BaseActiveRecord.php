@@ -1,5 +1,5 @@
 <?php
-namespace webvimark\components;
+namespace xvetx\components;
 
 use webvimark\helpers\LittleBigHelper;
 use webvimark\helpers\Singleton;
